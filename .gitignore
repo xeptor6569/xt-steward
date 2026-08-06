@@ -25,5 +25,8 @@ blob-report/
 # logs
 *.log
 
+# local redis state
+dump.rdb
+
 # OS noise
 .DS_Store
