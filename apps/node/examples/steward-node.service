@@ -1,0 +1,34 @@
+# Steward Node systemd unit — see docs/deployment.md for installation steps.
+#
+# Runs as an unprivileged `steward` account. Workspaces the node should manage
+# must be readable/writable by that account.
+
+[Unit]
+Description=Steward Node daemon (Steward XT)
+Documentation=https://github.com/example/xt-steward
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=steward
+Group=steward
+ExecStart=/usr/local/bin/steward-node start --config /etc/steward-node/config.yaml
+Environment=STEWARD_NODE_STATE_DIR=/var/lib/steward-node
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+# Allow writing only to the state directory (and your workspaces, add below):
+ReadWritePaths=/var/lib/steward-node
+# ReadWritePaths=/srv/projects/xt-steward
+
+[Install]
+WantedBy=multi-user.target

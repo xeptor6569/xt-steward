@@ -1,0 +1,34 @@
+# Steward Node configuration
+#
+# This file is authoritative for filesystem paths: the control plane can only
+# ever reference workspaces by their `key`, never by path. Default locations
+# searched: ./steward-node.yaml, ~/.config/steward-node/config.yaml,
+# /etc/steward-node/config.yaml (or pass --config / set STEWARD_NODE_CONFIG).
+
+serverUrl: https://steward.example.com
+nodeName: home-server-01
+
+workspaces:
+  - key: steward
+    name: Steward XT
+    path: /srv/projects/xt-steward
+    readOnly: false
+
+agents:
+  - key: diagnostic
+    type: diagnostic
+    name: Built-in Diagnostic Agent
+    enabled: true
+
+maxConcurrentRuns: 2
+
+# Log level: fatal | error | warn | info | debug | trace
+logLevel: info
+
+# Development only: allow a plain-HTTP control plane (ws:// transport).
+# Never enable this in production.
+# allowInsecureHttp: true
+
+# Extra secret values to redact from all run output and error messages.
+# redactValues:
+#   - my-database-password
