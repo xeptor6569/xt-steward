@@ -22,6 +22,22 @@ function readCsrfCookie(): string | null {
   return match?.[1] ?? null;
 }
 
+/**
+ * The API issues the CSRF cookie on any response. On a fresh browser (e.g.
+ * the first-boot setup form) no API request has happened yet, so fetch one
+ * before the first state-changing call.
+ */
+async function ensureCsrfCookie(): Promise<string | null> {
+  const existing = readCsrfCookie();
+  if (existing) return existing;
+  try {
+    await fetch(`${apiBaseUrl()}/api/v1/setup/status`, { credentials: "include" });
+  } catch {
+    return null;
+  }
+  return readCsrfCookie();
+}
+
 export async function api<T>(
   path: string,
   options: { method?: string; body?: unknown } = {},
@@ -30,7 +46,7 @@ export async function api<T>(
   const headers: Record<string, string> = {};
   if (options.body !== undefined) headers["content-type"] = "application/json";
   if (method !== "GET") {
-    const csrf = readCsrfCookie();
+    const csrf = await ensureCsrfCookie();
     if (csrf) headers["x-steward-csrf"] = csrf;
   }
 
