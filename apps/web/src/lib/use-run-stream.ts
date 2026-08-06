@@ -26,7 +26,11 @@ export function useRunStream(runId: string, enabled: boolean) {
     if (!enabled) return;
     let closed = false;
 
-    const url = new URL(`/api/v1/runs/${runId}/events/stream`, apiBaseUrl());
+    // An empty base means "same origin" (production behind the reverse proxy).
+    const url = new URL(
+      `/api/v1/runs/${runId}/events/stream`,
+      apiBaseUrl() || window.location.origin,
+    );
     if (lastSequenceRef.current > 0) {
       url.searchParams.set("lastEventId", String(lastSequenceRef.current));
     }

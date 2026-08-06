@@ -4,10 +4,23 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
-const migrationsFolder = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../drizzle");
+/**
+ * Where the checked-in SQL migrations live. Defaults to the folder next to
+ * this source file; bundled deployments (Docker) point elsewhere via
+ * STEWARD_MIGRATIONS_DIR because bundlers relocate the code.
+ */
+function defaultMigrationsFolder(): string {
+  return (
+    process.env.STEWARD_MIGRATIONS_DIR ??
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../drizzle")
+  );
+}
 
 /** Applies all checked-in SQL migrations. Safe to run repeatedly. */
-export async function runMigrations(databaseUrl: string): Promise<void> {
+export async function runMigrations(
+  databaseUrl: string,
+  migrationsFolder = defaultMigrationsFolder(),
+): Promise<void> {
   const client = postgres(databaseUrl, { max: 1, onnotice: () => {} });
   try {
     await migrate(drizzle(client), { migrationsFolder });

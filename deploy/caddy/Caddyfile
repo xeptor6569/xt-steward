@@ -1,0 +1,22 @@
+# Steward XT reverse proxy.
+#
+# With STEWARD_DOMAIN set (e.g. app.stewardxt.cc) Caddy serves that hostname
+# and provisions TLS automatically. Without it, it serves plain HTTP on :80
+# for local evaluation.
+
+{$STEWARD_DOMAIN::80} {
+	encode zstd gzip
+
+	# API + node WebSocket gateway (`/api/v1/node-gateway` upgrades are
+	# proxied transparently). Server-Sent Events pass through unbuffered.
+	handle /api/* {
+		reverse_proxy api:3001 {
+			flush_interval -1
+		}
+	}
+
+	# Dashboard.
+	handle {
+		reverse_proxy web:3000
+	}
+}
