@@ -37,6 +37,8 @@ interface Connection {
   nodeName: string;
   socket: WebSocket;
   helloReceived: boolean;
+  /** Serializes message handling so run events persist in arrival order. */
+  inbox: Promise<void>;
   livenessTimer?: NodeJS.Timeout;
   helloTimer?: NodeJS.Timeout;
 }
@@ -135,6 +137,7 @@ export class NodeGateway {
       nodeName: node.name,
       socket,
       helloReceived: false,
+      inbox: Promise.resolve(),
     };
     this.connections.set(node.id, conn);
 
@@ -148,9 +151,11 @@ export class NodeGateway {
         this.sendError(conn, "invalid_message", "binary or oversized frame");
         return;
       }
-      void this.handleMessage(conn, raw).catch((err: unknown) => {
-        this.log.error({ err, nodeId: conn.nodeId }, "error handling node message");
-      });
+      conn.inbox = conn.inbox.then(() =>
+        this.handleMessage(conn, raw).catch((err: unknown) => {
+          this.log.error({ err, nodeId: conn.nodeId }, "error handling node message");
+        }),
+      );
     });
 
     socket.on("close", () => {

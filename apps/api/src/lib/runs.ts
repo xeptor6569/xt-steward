@@ -88,7 +88,7 @@ export async function createRun(ctx: AppContext, input: CreateRunInput): Promise
     "dispatch",
     { runId: run.id },
     {
-      jobId: `run:${run.id}`,
+      jobId: run.id,
       attempts: 8,
       backoff: { type: "exponential", delay: 2000 },
       removeOnComplete: 1000,
@@ -132,7 +132,7 @@ export async function cancelRun(
       { reason: "user_requested" },
     );
     if (updated) {
-      const job = await ctx.runDispatchQueue.getJob(`run:${runId}`);
+      const job = await ctx.runDispatchQueue.getJob(runId);
       if (job) await job.remove().catch(() => undefined);
       await recordAudit(ctx.db, {
         actorType: "user",
