@@ -48,6 +48,49 @@ pages on the apex or another subdomain).
 Health probes: `GET /api/v1/health/live` (liveness) and
 `GET /api/v1/health/ready` (checks PostgreSQL and Redis).
 
+### Continuous deployment (GitHub Actions, no SSH)
+
+The repo ships two workflows:
+
+- **CI** (`.github/workflows/ci.yml`) — lint, typecheck, unit, build,
+  integration, and Playwright E2E on every push/PR, using GitHub-hosted
+  runners with PostgreSQL/Redis service containers.
+- **Deploy** (`.github/workflows/deploy.yml`) — runs on a **self-hosted
+  runner installed on the production host**. After CI succeeds on `main` (or
+  on manual dispatch) it checks out that exact commit locally and runs
+  `docker compose up -d --build`, then gates on the API readiness probe.
+  Nothing SSHes anywhere; the runner *is* the deploy agent.
+
+All configuration comes from GitHub — no `.env` file is written to the
+server. Create a GitHub **environment named `production`** with:
+
+| Kind     | Name                    | Example                    |
+| -------- | ----------------------- | -------------------------- |
+| Secret   | `POSTGRES_PASSWORD`     | long random string (required) |
+| Variable | `STEWARD_DOMAIN`        | `app.stewardxt.cc`         |
+| Variable | `STEWARD_WEB_ORIGIN`    | `https://app.stewardxt.cc` |
+| Variable | `STEWARD_COOKIE_SECURE` | `true`                     |
+| Variable | `STEWARD_LOG_LEVEL`     | `info`                     |
+
+Unset variables fall back to the compose defaults (plain-HTTP localhost
+evaluation mode). Changing `POSTGRES_PASSWORD` after the first deploy does
+not change the password of the existing database volume — update it in
+PostgreSQL first or recreate the volume.
+
+Runner setup on the production host:
+
+1. Install Docker (with the compose plugin) and git.
+2. Add a self-hosted runner (repo **Settings → Actions → Runners**) and give
+   it the extra label **`prod`** — the deploy job targets
+   `[self-hosted, prod]`, so other self-hosted runners won't pick it up.
+3. Add the runner's user to the `docker` group and run the runner as a
+   service (`./svc.sh install && ./svc.sh start`).
+
+Database/Redis state lives in named Docker volumes under the compose project
+name `steward-xt`, so it survives redeploys and is independent of the
+runner's checkout directory. Optionally add required reviewers to the
+`production` environment for manual deploy approval.
+
 ### Upgrades and backups
 
 Migrations are applied by the one-shot `migrate` service before the API and

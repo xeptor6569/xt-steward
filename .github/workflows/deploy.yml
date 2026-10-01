@@ -1,0 +1,74 @@
+# Production deployment via a self-hosted runner ON the production host.
+#
+# No SSH involved: the runner checks out the code locally and rebuilds the
+# Docker Compose stack in place. Configuration comes exclusively from GitHub
+# (environment "production"):
+#
+#   Secrets:    POSTGRES_PASSWORD   (required)
+#   Variables:  STEWARD_DOMAIN, STEWARD_WEB_ORIGIN, STEWARD_COOKIE_SECURE,
+#               STEWARD_LOG_LEVEL   (all optional; compose defaults apply)
+#
+# Triggers: automatically after CI succeeds on main, or manually via
+# "Run workflow". See docs/deployment.md for runner setup.
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # workflow_run fires on failure too; only deploy green commits.
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, prod]
+    environment: production
+    timeout-minutes: 30
+
+    env:
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      STEWARD_DOMAIN: ${{ vars.STEWARD_DOMAIN }}
+      STEWARD_WEB_ORIGIN: ${{ vars.STEWARD_WEB_ORIGIN }}
+      STEWARD_COOKIE_SECURE: ${{ vars.STEWARD_COOKIE_SECURE }}
+      STEWARD_LOG_LEVEL: ${{ vars.STEWARD_LOG_LEVEL }}
+
+    steps:
+      - name: Check required configuration
+        run: |
+          if [ -z "$POSTGRES_PASSWORD" ]; then
+            echo "::error::POSTGRES_PASSWORD secret is not set on the 'production' environment"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          # Deploy exactly the commit CI validated (manual runs use the branch head).
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Build and start the stack
+        run: docker compose up -d --build --remove-orphans
+
+      - name: Wait for the API to become healthy
+        run: |
+          for i in $(seq 1 60); do
+            if docker compose exec -T api wget -qO- http://127.0.0.1:3001/api/v1/health/ready >/dev/null 2>&1; then
+              echo "API is ready."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::API did not become ready in time"
+          docker compose ps
+          docker compose logs --tail 100 migrate api worker
+          exit 1
+
+      - name: Prune dangling images
+        if: success()
+        run: docker image prune -f
