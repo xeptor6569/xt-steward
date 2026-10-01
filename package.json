@@ -1,0 +1,36 @@
+{
+  "name": "xt-steward",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Steward XT — a self-hosted control plane for running AI coding agents on machines you own.",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@10.33.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint && prettier --check .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "pnpm --filter @steward/web test:e2e",
+    "format": "prettier --write .",
+    "db:generate": "pnpm --filter @steward/database db:generate",
+    "db:migrate": "pnpm --filter @steward/database db:migrate",
+    "node:sim": "pnpm --filter @steward/node sim"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "turbo": "^2.10.8"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msgpackr-extract",
+      "@tailwindcss/oxide",
+      "sharp"
+    ]
+  }
+}

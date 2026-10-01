@@ -1,0 +1,43 @@
+{
+  "name": "@steward/node",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Steward Node daemon: connects user-owned machines to the Steward XT control plane.",
+  "bin": {
+    "steward-node": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts start",
+    "build": "tsup",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "sim": "tsx scripts/sim.ts"
+  },
+  "dependencies": {
+    "@steward/agents": "workspace:*",
+    "@steward/protocol": "workspace:*",
+    "@steward/shared": "workspace:*",
+    "commander": "^15.0.0",
+    "ws": "^8.21.2",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@steward/config": "workspace:*",
+    "@types/node": "^22.15.0",
+    "@types/ws": "^8.18.0",
+    "eslint": "^10.8.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

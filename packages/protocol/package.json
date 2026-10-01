@@ -1,0 +1,33 @@
+{
+  "name": "@steward/protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Versioned node/control-plane WebSocket protocol messages for Steward XT.",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./internal": {
+      "types": "./src/internal.ts",
+      "default": "./src/internal.ts"
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@steward/shared": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@steward/config": "workspace:*",
+    "@types/node": "^22.15.0",
+    "eslint": "^10.8.0",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

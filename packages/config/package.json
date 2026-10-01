@@ -1,0 +1,16 @@
+{
+  "name": "@steward/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared TypeScript, ESLint, and formatting configuration for Steward XT.",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint": "./eslint.config.mjs"
+  },
+  "dependencies": {
+    "eslint": "^10.8.0",
+    "eslint-plugin-react-hooks": "^7.1.0",
+    "typescript-eslint": "^8.66.0"
+  }
+}
